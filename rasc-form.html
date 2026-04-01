@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>March RASC Check-In</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #181a24;
+    --card-hover: #1e2130;
+    --accent: #e8a838;
+    --accent-glow: rgba(232, 168, 56, 0.15);
+    --text: #e4e4e8;
+    --text-dim: #8b8d9a;
+    --border: #2a2d3a;
+    --success: #4ade80;
+    --error: #f87171;
+    --radius: 14px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .bg-grain {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+  }
+
+  .bg-glow {
+    position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 500px; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse, rgba(232,168,56,0.08) 0%, transparent 70%);
+  }
+
+  .container {
+    position: relative; z-index: 1;
+    max-width: 640px; margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+
+  .header {
+    text-align: center; margin-bottom: 48px;
+    animation: fadeUp 0.8s ease-out;
+  }
+
+  .header-badge {
+    display: inline-block;
+    padding: 6px 16px; border-radius: 100px;
+    background: var(--accent-glow); border: 1px solid rgba(232,168,56,0.25);
+    font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 20px;
+  }
+
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px; font-weight: 400; line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .header p {
+    color: var(--text-dim); font-size: 15px; line-height: 1.6;
+  }
+
+  .progress-wrap {
+    position: sticky; top: 16px; z-index: 100;
+    margin-bottom: 36px;
+    animation: fadeUp 0.8s ease-out 0.1s both;
+  }
+
+  .progress-bar-bg {
+    height: 4px; border-radius: 4px;
+    background: var(--border);
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%; border-radius: 4px;
+    background: linear-gradient(90deg, var(--accent), #f0c060);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+
+  .progress-label {
+    display: flex; justify-content: space-between; margin-top: 8px;
+    font-size: 12px; color: var(--text-dim); font-weight: 500;
+  }
+
+  .question-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    animation: fadeUp 0.6s ease-out both;
+  }
+
+  .question-card:hover {
+    border-color: rgba(232,168,56,0.2);
+    box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+  }
+
+  .question-card.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent), 0 4px 30px rgba(232,168,56,0.08);
+  }
+
+  .q-number {
+    font-size: 11px; font-weight: 600; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 10px;
+  }
+
+  .q-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px; line-height: 1.4; margin-bottom: 6px;
+  }
+
+  .q-sub {
+    font-size: 13px; color: var(--text-dim); margin-bottom: 20px;
+  }
+
+  .option-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .option {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 14px 16px; border-radius: 10px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer; transition: all 0.2s;
+    text-align: left; font-size: 14px; color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.5; width: 100%;
+  }
+
+  .option:hover {
+    background: var(--card-hover);
+    border-color: rgba(232,168,56,0.3);
+  }
+
+  .option.selected {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+  }
+
+  .option-indicator {
+    flex-shrink: 0; width: 20px; height: 20px;
+    border-radius: 6px; border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; margin-top: 1px;
+  }
+
+  .option.radio .option-indicator { border-radius: 50%; }
+
+  .option.selected .option-indicator {
+    border-color: var(--accent); background: var(--accent);
+  }
+
+  .option.selected .option-indicator::after {
+    content: '✓'; font-size: 12px; color: var(--bg); font-weight: 700;
+  }
+
+  .option-text { flex: 1; }
+
+  .conditional { display: none; }
+  .conditional.visible {
+    display: block;
+    animation: fadeUp 0.5s ease-out;
+  }
+
+  .submit-wrap {
+    margin-top: 36px; text-align: center;
+    animation: fadeUp 0.6s ease-out 0.4s both;
+  }
+
+  .submit-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 16px 48px; border-radius: 100px;
+    background: linear-gradient(135deg, var(--accent), #d4922e);
+    color: var(--bg); font-family: 'DM Sans', sans-serif;
+    font-size: 16px; font-weight: 600; border: none;
+    cursor: pointer; transition: all 0.3s;
+    box-shadow: 0 4px 20px rgba(232,168,56,0.3);
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(232,168,56,0.4);
+  }
+
+  .submit-btn:disabled {
+    opacity: 0.4; cursor: not-allowed; transform: none;
+    box-shadow: none;
+  }
+
+  .submit-btn.loading {
+    pointer-events: none; opacity: 0.7;
+  }
+
+  .success-screen {
+    display: none; text-align: center; padding: 80px 20px;
+    animation: fadeUp 0.8s ease-out;
+  }
+
+  .success-screen.visible { display: block; }
+
+  .success-icon {
+    width: 80px; height: 80px; margin: 0 auto 24px;
+    border-radius: 50%; background: rgba(74,222,128,0.1);
+    border: 2px solid var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+  }
+
+  .success-screen h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 28px; margin-bottom: 12px;
+  }
+
+  .success-screen p {
+    color: var(--text-dim); font-size: 15px; line-height: 1.6;
+  }
+
+  .error-msg {
+    display: none; text-align: center; margin-top: 16px;
+    padding: 14px 20px; border-radius: 10px;
+    background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3);
+    color: var(--error); font-size: 14px;
+  }
+  .error-msg.show { display: block; }
+
+  .validation-msg {
+    font-size: 13px; color: var(--error); margin-top: 8px;
+    display: none;
+  }
+  .validation-msg.show { display: block; }
+
+  /* Name/email inputs */
+  .info-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s ease-out both;
+  }
+
+  .info-card .q-number { margin-bottom: 16px; }
+
+  .input-group {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  .input-field {
+    width: 100%; padding: 14px 16px;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text);
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+  }
+
+  .input-field::placeholder { color: var(--text-dim); }
+
+  .input-field:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .input-field.error {
+    border-color: var(--error);
+    box-shadow: 0 0 0 1px var(--error);
+  }
+
+  .field-error {
+    font-size: 12px; color: var(--error); display: none; margin-top: -6px;
+  }
+
+  .field-error.show { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .spinner {
+    display: inline-block; width: 18px; height: 18px;
+    border: 2px solid transparent; border-top-color: var(--bg);
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+  }
+
+  @media (max-width: 480px) {
+    .container { padding: 24px 16px 60px; }
+    .header h1 { font-size: 28px; }
+    .question-card { padding: 24px 20px; }
+    .q-text { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-grain"></div>
+<div class="bg-glow"></div>
+
+<div class="container" id="formContainer">
+  <div class="header">
+    <div class="header-badge">March Check-In</div>
+    <h1>RASC Themed Conversation</h1>
+    <p>Quick check-in for your first RASC Hours visit this month.<br>Takes about 3 minutes.</p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-label">
+      <span id="progressText">0 of 9 answered</span>
+      <span id="progressPercent">0%</span>
+    </div>
+  </div>
+
+  <div id="questionsWrap">
+    <div class="info-card">
+      <div class="q-number">Your Info</div>
+      <div class="q-text" style="margin-bottom: 20px;">Before we start</div>
+      <div class="input-group">
+        <input type="text" class="input-field" id="nameInput" placeholder="Your full name" autocomplete="name">
+        <div class="field-error" id="nameError">Please enter your name</div>
+        <input type="email" class="input-field" id="emailInput" placeholder="Your email (optional)" autocomplete="email">
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-wrap">
+    <button class="submit-btn" id="submitBtn" disabled onclick="submitForm()">
+      Submit Responses ↗
+    </button>
+    <div class="validation-msg" id="validationMsg">Please answer all required questions before submitting.</div>
+    <div class="error-msg" id="errorMsg">Something went wrong. Please try again.</div>
+  </div>
+</div>
+
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">✓</div>
+  <h2>You're all set!</h2>
+  <p>Your responses have been recorded.<br>Thanks for checking in — enjoy the rest of your RASC Hours.</p>
+</div>
+
+<script>
+// =============================================
+// ⚠️  PASTE YOUR GOOGLE APPS SCRIPT URL BELOW
+// =============================================
+
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx8hi2nAtnmcjiN6uOLWrZBuwTzDTl1wlcPaj9LTef6dIbsU4GFtiAZ728Fs6T0HDp1fA/exec';
+
+// =============================================
+
+const questions = [
+  {
+    id: 'q1', number: 'Question 01',
+    text: 'Which of the following would you consider academic dishonesty?',
+    sub: 'Select all that apply',
+    type: 'checkbox',
+    column: 'Academic Dishonesty Awareness',
+    options: [
+      'Copying a friend\'s homework',
+      'Submitting AI-generated writing as your own',
+      'Paraphrasing a source without citing it',
+      'Collaborating on an assignment meant to be individual',
+      'Using AI to brainstorm ideas but writing the final work yourself',
+      'I\'m honestly not sure where the line is'
+    ]
+  },
+  {
+    id: 'q2', number: 'Question 02',
+    text: 'How comfortable are you navigating the role of AI tools in your coursework?',
+    sub: 'Select one',
+    type: 'radio',
+    column: 'AI Comfort Level',
+    options: [
+      'Very comfortable — I know when it\'s okay and when it\'s not',
+      'Somewhat comfortable — but the rules feel unclear depending on the class',
+      'Not very comfortable — I mostly avoid AI tools to be safe',
+      'I haven\'t really thought about it'
+    ]
+  },
+  {
+    id: 'q3', number: 'Question 03',
+    text: 'Have any of your professors explicitly addressed their AI policies this semester?',
+    sub: 'Select one',
+    type: 'radio',
+    column: 'Professor AI Policies',
+    options: [
+      'Yes, most of them have',
+      'A few have, but not all',
+      'No, none have mentioned it',
+      'I don\'t remember'
+    ]
+  },
+  {
+    id: 'q4', number: 'Question 04',
+    text: 'Which campus resources have you actually used to review or improve your work?',
+    sub: 'Select all that apply',
+    type: 'checkbox',
+    column: 'Campus Resources Used',
+    options: [
+      'Writing Center',
+      'Tutoring Center',
+      'Professor / TA office hours',
+      'Library research help desk',
+      'Peer study groups',
+      'Supplemental Instruction (SI)',
+      'None of the above'
+    ]
+  },
+  {
+    id: 'q5', number: 'Question 05',
+    text: 'What\'s the biggest reason you haven\'t used more of these resources?',
+    sub: 'Select one',
+    type: 'radio',
+    conditional: true,
+    column: 'Resource Barrier',
+    options: [
+      'I didn\'t know they existed',
+      'I don\'t think I need them',
+      'Scheduling conflicts / inconvenient hours',
+      'It feels intimidating or awkward',
+      'I just haven\'t gotten around to it'
+    ]
+  },
+  {
+    id: 'q6', number: 'Question 06',
+    text: 'Where are you at with planning next year\'s classes?',
+    sub: 'Select one',
+    type: 'radio',
+    column: 'Class Planning Status',
+    options: [
+      'I\'ve already mapped out my schedule',
+      'I have a general idea but need to finalize',
+      'I\'m waiting to meet with my advisor',
+      'I haven\'t started thinking about it yet'
+    ]
+  },
+  {
+    id: 'q7', number: 'Question 07',
+    text: 'What would help you most with course planning?',
+    sub: 'Select all that apply',
+    type: 'checkbox',
+    column: 'Course Planning Help Needed',
+    options: [
+      'A meeting with my academic advisor',
+      'Hearing from peers who\'ve taken the classes',
+      'Better info on course workload and difficulty',
+      'Help understanding degree requirements',
+      'I feel good — I don\'t need much help'
+    ]
+  },
+  {
+    id: 'q8', number: 'Question 08',
+    text: 'What\'s your housing plan for next year?',
+    sub: 'Select one',
+    type: 'radio',
+    column: 'Housing Plan',
+    options: [
+      'Already secured on-campus housing',
+      'Currently applying for on-campus housing',
+      'Actively looking at off-campus options',
+      'Haven\'t started the process yet'
+    ]
+  },
+  {
+    id: 'q9', number: 'Question 09',
+    text: 'How familiar are you with off-campus housing resources?',
+    sub: 'Select one',
+    type: 'radio',
+    column: 'Off-Campus Familiarity',
+    options: [
+      'Very familiar — I know where to look',
+      'Somewhat familiar — I\'ve browsed a little',
+      'Not familiar at all',
+      'Not applicable — I\'m staying on campus'
+    ]
+  }
+];
+
+const answers = {};
+const wrap = document.getElementById('questionsWrap');
+
+questions.forEach((q, qi) => {
+  const card = document.createElement('div');
+  card.className = 'question-card' + (q.conditional ? ' conditional' : '');
+  card.id = 'card-' + q.id;
+  card.style.animationDelay = (qi * 0.08) + 's';
+
+  let optionsHTML = q.options.map((opt, oi) => `
+    <button class="option ${q.type === 'radio' ? 'radio' : ''}" data-q="${q.id}" data-val="${oi}" onclick="selectOption('${q.id}', ${oi}, '${q.type}')">
+      <span class="option-indicator"></span>
+      <span class="option-text">${opt}</span>
+    </button>
+  `).join('');
+
+  card.innerHTML = `
+    <div class="q-number">${q.number}</div>
+    <div class="q-text">${q.text}</div>
+    <div class="q-sub">${q.sub}</div>
+    <div class="option-list">${optionsHTML}</div>
+  `;
+
+  wrap.appendChild(card);
+});
+
+function selectOption(qId, valIdx, type) {
+  if (type === 'radio') {
+    answers[qId] = [valIdx];
+    document.querySelectorAll(`.option[data-q="${qId}"]`).forEach(el => el.classList.remove('selected'));
+    document.querySelector(`.option[data-q="${qId}"][data-val="${valIdx}"]`).classList.add('selected');
+  } else {
+    if (!answers[qId]) answers[qId] = [];
+    const idx = answers[qId].indexOf(valIdx);
+    const btn = document.querySelector(`.option[data-q="${qId}"][data-val="${valIdx}"]`);
+    if (idx > -1) {
+      answers[qId].splice(idx, 1);
+      btn.classList.remove('selected');
+    } else {
+      answers[qId].push(valIdx);
+      btn.classList.add('selected');
+    }
+    if (answers[qId].length === 0) delete answers[qId];
+  }
+
+  if (qId === 'q4') {
+    const q5Card = document.getElementById('card-q5');
+    const noneIdx = 6;
+    const show = answers.q4 && (answers.q4.includes(noneIdx) || answers.q4.length <= 1);
+    q5Card.classList.toggle('visible', show);
+    if (!show) {
+      delete answers.q5;
+      document.querySelectorAll('.option[data-q="q5"]').forEach(el => el.classList.remove('selected'));
+    }
+  }
+
+  document.querySelectorAll('.question-card').forEach(c => c.classList.remove('active'));
+  document.getElementById('card-' + qId).classList.add('active');
+  updateProgress();
+}
+
+function updateProgress() {
+  const totalVisible = questions.filter(q => {
+    if (q.conditional) return document.getElementById('card-' + q.id).classList.contains('visible');
+    return true;
+  }).length;
+
+  const answeredVisible = questions.filter(q => {
+    if (q.conditional && !document.getElementById('card-' + q.id).classList.contains('visible')) return false;
+    return answers[q.id] && answers[q.id].length > 0;
+  }).length;
+
+  const pct = Math.round((answeredVisible / totalVisible) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = answeredVisible + ' of ' + totalVisible + ' answered';
+  document.getElementById('progressPercent').textContent = pct + '%';
+
+  document.getElementById('submitBtn').disabled = answeredVisible < totalVisible;
+  document.getElementById('validationMsg').classList.remove('show');
+}
+
+function buildPayload() {
+  const payload = {
+    Timestamp: new Date().toISOString(),
+    Name: document.getElementById('nameInput').value.trim(),
+    Email: document.getElementById('emailInput').value.trim()
+  };
+  questions.forEach(q => {
+    if (q.conditional && !document.getElementById('card-' + q.id).classList.contains('visible')) {
+      payload[q.column] = 'N/A';
+      return;
+    }
+    if (!answers[q.id]) {
+      payload[q.column] = '';
+      return;
+    }
+    const selectedLabels = answers[q.id].map(i => q.options[i]);
+    payload[q.column] = selectedLabels.join('; ');
+  });
+  return payload;
+}
+
+async function submitForm() {
+  const totalVisible = questions.filter(q => {
+    if (q.conditional) return document.getElementById('card-' + q.id).classList.contains('visible');
+    return true;
+  });
+  const allAnswered = totalVisible.every(q => answers[q.id] && answers[q.id].length > 0);
+
+  if (!allAnswered) {
+    document.getElementById('validationMsg').classList.add('show');
+    return;
+  }
+
+  // Validate name
+  const nameInput = document.getElementById('nameInput');
+  const nameError = document.getElementById('nameError');
+  if (!nameInput.value.trim()) {
+    nameInput.classList.add('error');
+    nameError.classList.add('show');
+    nameInput.focus();
+    return;
+  }
+  nameInput.classList.remove('error');
+  nameError.classList.remove('show');
+
+  const btn = document.getElementById('submitBtn');
+  const errorEl = document.getElementById('errorMsg');
+  errorEl.classList.remove('show');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span class="spinner"></span> Submitting...';
+
+  const payload = buildPayload();
+
+  try {
+    await fetch(GOOGLE_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    document.getElementById('formContainer').style.display = 'none';
+    document.getElementById('successScreen').classList.add('visible');
+  } catch (err) {
+    console.error('Submit error:', err);
+    errorEl.classList.add('show');
+    btn.classList.remove('loading');
+    btn.innerHTML = 'Submit Responses ↗';
+  }
+}
+</script>
+
+</body>
+</html>
